@@ -1,5 +1,6 @@
-public class RoboSensível extends AdvancedRobot {
+import robocode.*;
 
+public class RoboSensivel extends AdvancedRobot {
     // Variáveis para controlar o movimento
     private double velocidade = 5;
     private double angulo = 0;
@@ -9,13 +10,15 @@ public class RoboSensível extends AdvancedRobot {
     private double distanciaInimigo = 0;
     private double anguloInimigo = 0;
     private boolean inimigoVisivel = false;
+    private double inimigoX = 0;
+    private double inimigoY = 0;
 
     // Variáveis para controlar o tiro
     private int energiaArma = 100;
     private boolean atirando = false;
 
     public void run() {
-    // Ajustar o corpo do robô para melhor detecção de inimigos
+        // Ajusta o corpo do robô para melhor detecção de inimigos
         setTurnGunRight(45);
         setFireBullet(3);
 
@@ -23,24 +26,24 @@ public class RoboSensível extends AdvancedRobot {
             // Atualizar informações sobre o inimigo
             scan();
 
-     // Verificar se o inimigo está visível
+            // Verifique se o inimigo está visível
             if (inimigoVisivel) {
-    // Calcular o ângulo para mirar no inimigo
-                anguloInimigo = getHeading() + getAngleToTarget(inimigoX, inimigoY);
+                // Calcular o ângulo para mirar no inimigo
+                anguloInimigo = getHeading() + angulo;
 
-    // Verificar se o robô está apontando para o inimigo
-                if (Math.abs(getGunBearing() - anguloInimigo) > 5) {
-    // Virar o canhão para apontar para o inimigo
-                    setTurnGunRight(anguloInimigo - getGunBearing());
+                // Verifique se o robô está apontando para o inimigo
+                if (Math.abs(getGunHeading() - anguloInimigo) > 5) {
+                    // Virar o canhão para apontar para o inimigo
+                    setTurnGunRight(anguloInimigo - getGunHeading());
                 } else {
-     // Se o inimigo estiver dentro do alcance, atirar
+                    // Se o inimigo estiver dentro do alcance, atire
                     if (distanciaInimigo < 100) {
                         if (energiaArma > 0) {
                             setFire(3);
                             energiaArma -= 3;
                             atirando = true;
                         } else {
-    // Recarregar a arma se estiver sem energia
+                            // Recarregar a arma se estiver sem energia
                             setTurnGunRight(45);
                             execute();
                             setTurnGunRight(-45);
@@ -50,28 +53,28 @@ public class RoboSensível extends AdvancedRobot {
                     }
                 }
             } else {
-                // Mover-se aleatoriamente se nenhum inimigo estiver visível
+                // Mover-se aleatoriamente se nenhum inimigo for visível
                 if (movendoParaFrente) {
                     setAhead(velocidade);
                 } else {
                     setBack(velocidade);
                 }
 
-                if (randomInt(10) == 0) {
+                if (Math.random() < 0.1) {
                     movendoParaFrente = !movendoParaFrente;
                 }
 
-                if (randomInt(50) == 0) {
-                    angulo = randomInt(360) - 180;
+                if (Math.random() < 0.02) {
+                    angulo = Math.random() * 360 - 180;
                     setTurnRight(angulo);
                 }
             }
 
-      // Verificar se o robô recebeu dano
+            // Verifique se o robô recebeu dano
             if (getEnergy() < 100) {
                 // Mover para trás e girar aleatoriamente para evitar mais danos
                 setBack(velocidade);
-                angulo = randomInt(360) - 180;
+                angulo = Math.random() * 360 - 180;
                 setTurnRight(angulo);
             }
 
@@ -80,26 +83,29 @@ public class RoboSensível extends AdvancedRobot {
         }
     }
 
-   // Evento chamado quando um robô é escaneado
+    // Evento chamado quando um robô é escaneado
     public void onScannedRobot(ScannedRobotEvent e) {
         // Armazenar informações sobre o inimigo
         inimigoVisivel = true;
         distanciaInimigo = e.getDistance();
-        inimigoX = e.getX();
-        inimigoY = e.getY();
+        angulo = e.getBearing();
+        anguloInimigo = e.getBearingRadians();
+        inimigoX = getX() + Math.sin(getHeadingRadians() + anguloInimigo) * distanciaInimigo;
+        inimigoY = getY() + Math.cos(getHeadingRadians() + anguloInimigo) * distanciaInimigo;
 
-    // Atualizar a energia da arma após o tiro
+        // Atualizar a energia da arma após o tiro
         if (atirando) {
             energiaArma -= (int) e.getEnergy();
             atirando = false;
         }
     }
 
- // Evento chamado quando o robô bate em algo
+    // Evento chamado quando o robô bate em algo
     public void onHitWall(HitWallEvent e) {
         // Mover para trás e girar aleatoriamente para evitar mais danos
         setBack(velocidade);
-        angulo = randomInt(360) - 180;
+        angulo = Math.random() * 360 - 180;
         setTurnRight(angulo);
     }
 }
+
