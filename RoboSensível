@@ -1,0 +1,105 @@
+public class RoboSensível extends AdvancedRobot {
+
+    // Variáveis para controlar o movimento
+    private double velocidade = 5;
+    private double angulo = 0;
+    private boolean movendoParaFrente = true;
+
+    // Variáveis para lidar com o inimigo
+    private double distanciaInimigo = 0;
+    private double anguloInimigo = 0;
+    private boolean inimigoVisivel = false;
+
+    // Variáveis para controlar o tiro
+    private int energiaArma = 100;
+    private boolean atirando = false;
+
+    public void run() {
+    // Ajustar o corpo do robô para melhor detecção de inimigos
+        setTurnGunRight(45);
+        setFireBullet(3);
+
+        while (true) {
+            // Atualizar informações sobre o inimigo
+            scan();
+
+     // Verificar se o inimigo está visível
+            if (inimigoVisivel) {
+    // Calcular o ângulo para mirar no inimigo
+                anguloInimigo = getHeading() + getAngleToTarget(inimigoX, inimigoY);
+
+    // Verificar se o robô está apontando para o inimigo
+                if (Math.abs(getGunBearing() - anguloInimigo) > 5) {
+    // Virar o canhão para apontar para o inimigo
+                    setTurnGunRight(anguloInimigo - getGunBearing());
+                } else {
+     // Se o inimigo estiver dentro do alcance, atirar
+                    if (distanciaInimigo < 100) {
+                        if (energiaArma > 0) {
+                            setFire(3);
+                            energiaArma -= 3;
+                            atirando = true;
+                        } else {
+    // Recarregar a arma se estiver sem energia
+                            setTurnGunRight(45);
+                            execute();
+                            setTurnGunRight(-45);
+                            execute();
+                            energiaArma = 100;
+                        }
+                    }
+                }
+            } else {
+                // Mover-se aleatoriamente se nenhum inimigo estiver visível
+                if (movendoParaFrente) {
+                    setAhead(velocidade);
+                } else {
+                    setBack(velocidade);
+                }
+
+                if (randomInt(10) == 0) {
+                    movendoParaFrente = !movendoParaFrente;
+                }
+
+                if (randomInt(50) == 0) {
+                    angulo = randomInt(360) - 180;
+                    setTurnRight(angulo);
+                }
+            }
+
+      // Verificar se o robô recebeu dano
+            if (getEnergy() < 100) {
+                // Mover para trás e girar aleatoriamente para evitar mais danos
+                setBack(velocidade);
+                angulo = randomInt(360) - 180;
+                setTurnRight(angulo);
+            }
+
+            // Esperar um pouco antes de repetir o ciclo
+            execute();
+        }
+    }
+
+   // Evento chamado quando um robô é escaneado
+    public void onScannedRobot(ScannedRobotEvent e) {
+        // Armazenar informações sobre o inimigo
+        inimigoVisivel = true;
+        distanciaInimigo = e.getDistance();
+        inimigoX = e.getX();
+        inimigoY = e.getY();
+
+    // Atualizar a energia da arma após o tiro
+        if (atirando) {
+            energiaArma -= (int) e.getEnergy();
+            atirando = false;
+        }
+    }
+
+ // Evento chamado quando o robô bate em algo
+    public void onHitWall(HitWallEvent e) {
+        // Mover para trás e girar aleatoriamente para evitar mais danos
+        setBack(velocidade);
+        angulo = randomInt(360) - 180;
+        setTurnRight(angulo);
+    }
+}
