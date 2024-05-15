@@ -1,0 +1,62 @@
+import robocode.*;
+
+public class MercenarioRobo extends AdvancedRobot {
+
+    private double ultimaEnergiaInimigo = 100;
+    private int direcaoMovimento = 1;
+
+    public void run() {
+        setAdjustRadarForGunTurn(true);
+        setAdjustGunForRobotTurn(true);
+
+        while (true) {
+            movimentacaoEstrategica(); // Implementa uma movimentação estratégica para esquivar-se dos tiros
+            execute(); // Executa os comandos pendentes
+
+            setTurnRadarRight(360); // Gira o radar completo para a direita para localizar alvos
+        }
+    }
+
+    public void onScannedRobot(ScannedRobotEvent e) {
+        double energiaInimigo = e.getEnergy();
+
+        double potenciaTiro = Math.min(3, energiaInimigo / 4);
+        potenciaTiro = Math.max(0.1, potenciaTiro);
+
+        double anguloMira = getHeading() + e.getBearing();
+        setTurnGunRight(normalizeBearing(anguloMira - getGunHeading()));
+
+        if (energiaInimigo < ultimaEnergiaInimigo) {
+            movimentacaoEvasiva(); // Realiza movimentos evasivos ao ser atingido
+        }
+
+        setFire(potenciaTiro); // Atira com precisão e potência calculadas
+
+        ultimaEnergiaInimigo = energiaInimigo;
+    }
+
+    public void onHitByBullet(HitByBulletEvent e) {
+        movimentacaoEvasiva(); // Executa movimentos evasivos ao ser atingido por uma bala
+    }
+
+    // Implementa movimentos estratégicos para esquivar-se de tiros inimigos
+    private void movimentacaoEstrategica() {
+        if (getTime() % 20 == 0) { // A cada 20 turnos
+            direcaoMovimento *= -1; // Inverte a direção de movimento
+            setAhead(100 * direcaoMovimento); // Move para frente ou para trás 100 pixels
+        }
+        turnRight(10); // Gira suavemente para verificar o ambiente
+    }
+
+    // Executa movimentos evasivos ao ser atingido por uma bala
+    private void movimentacaoEvasiva() {
+        setTurnRight(45); // Gira 45 graus para tentar evitar futuros tiros
+        setAhead(100); // Move para frente para escapar do alcance do inimigo
+    }
+
+    private double normalizeBearing(double angle) {
+        while (angle > 180) angle -= 360;
+        while (angle < -180) angle += 360;
+        return angle;
+    }
+}
