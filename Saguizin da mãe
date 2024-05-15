@@ -1,0 +1,55 @@
+public class saguizinDAMÃE extends AdvancedRobot {
+    
+    private double ultimaEnergiaInimigo = 100;
+    private int direcaoMovimento = 1;
+
+    public void run() {
+        setAdjustRadarForGunTurn(true);
+        setAdjustGunForRobotTurn(true);
+
+        while (true) {
+            setAhead(100 * direcaoMovimento);
+            setTurnRight(90);
+            waitFor(new TurnCompleteCondition(this));
+
+            setTurnRadarRight(360);
+            execute();
+
+            if (getX() <= 50 || getX() >= getBattleFieldWidth() - 50 || getY() <= 50 || getY() >= getBattleFieldHeight() - 50) {
+                direcaoMovimento = -direcaoMovimento;
+            }
+        }
+    }
+
+    public void onScannedRobot(ScannedRobotEvent e) {
+        double energiaInimigo = e.getEnergy();
+        double distancia = e.getDistance();
+        double velocidadeInimigo = e.getVelocity();
+
+        double potenciaTiro = Math.min(3, energiaInimigo / 4);
+        potenciaTiro = Math.max(0.1, potenciaTiro);
+
+        double anguloMira = getHeading() + e.getBearing();
+        setTurnGunRight(normalizeBearing(anguloMira - getGunHeading()));
+
+        if (energiaInimigo < ultimaEnergiaInimigo) {
+            setTurnRight(normalizeBearing(e.getBearing() + 90 - (10 * direcaoMovimento)));
+        }
+
+        // Calcula a previsão de movimento do inimigo
+        double anguloAbsolutoInimigo = getHeading() + e.getBearing();
+        double previsao = anguloAbsolutoInimigo + (velocidadeInimigo * Math.sin(Math.toRadians(e.getHeading())) * 
+                                              (getTime() - getTime()));
+        setTurnGunRight(normalizeBearing(previsao - getGunHeading()));
+
+        setFire(potenciaTiro);
+
+        ultimaEnergiaInimigo = energiaInimigo;
+    }
+
+    private double normalizeBearing(double angle) {
+        while (angle > 180) angle -= 360;
+        while (angle < -180) angle += 360;
+        return angle;
+    }
+}
