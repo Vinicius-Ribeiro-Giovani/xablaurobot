@@ -1,4 +1,4 @@
-public class saguizinDAMÃE extends AdvancedRobot {
+public class saguizindamae extends AdvancedRobot {
     
     private double ultimaEnergiaInimigo = 100;
     private int direcaoMovimento = 1;
